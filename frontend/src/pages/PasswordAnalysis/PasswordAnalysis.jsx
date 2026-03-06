@@ -22,7 +22,7 @@ import {
   Error as ErrorIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material'
-import { passwordAnalysisAPI } from '../../services/api'
+import { passwordAnalysisAPI, emailCheckAPI } from '../../services/api'
 
 const PasswordAnalysis = () => {
   const [password, setPassword] = useState('')
@@ -30,6 +30,7 @@ const PasswordAnalysis = () => {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+  const [passwordBreachCheck, setPasswordBreachCheck] = useState(null)
 
   const handleAnalyze = async () => {
     if (!password) {
@@ -40,12 +41,23 @@ const PasswordAnalysis = () => {
     setLoading(true)
     setError(null)
     setResult(null)
+    setPasswordBreachCheck(null)
 
     try {
+      // Check password breach first
+      try {
+        const breachResponse = await emailCheckAPI.checkPassword(password)
+        setPasswordBreachCheck(breachResponse.data?.data || null)
+      } catch (breachErr) {
+        console.error('Password breach check error:', breachErr)
+        // Continue with analysis even if breach check fails
+      }
+
+      // Then analyze password
       const response = await passwordAnalysisAPI.analyzePassword({
         password,
         email: email || undefined,
-        breach_count: 0,
+        breach_count: passwordBreachCheck?.count || 0,
       })
       setResult(response.data)
     } catch (err) {
@@ -131,6 +143,24 @@ const PasswordAnalysis = () => {
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
+          </Alert>
+        )}
+
+        {passwordBreachCheck && (
+          <Alert 
+            severity={passwordBreachCheck.is_breached ? "error" : "success"} 
+            sx={{ mb: 2 }}
+            icon={passwordBreachCheck.is_breached ? <ErrorIcon /> : <CheckCircleIcon />}
+          >
+            <Typography variant="h6" gutterBottom>
+              {passwordBreachCheck.is_breached ? "⚠️ Lozinka je kompromitovana!" : "✓ Lozinka nije kompromitovana"}
+            </Typography>
+            <Typography variant="body2">
+              {passwordBreachCheck.message}
+              {passwordBreachCheck.is_breached && passwordBreachCheck.count > 0 && (
+                <> Pronađena u <strong>{passwordBreachCheck.count.toLocaleString()}</strong> data breach-ova!</>
+              )}
+            </Typography>
           </Alert>
         )}
 

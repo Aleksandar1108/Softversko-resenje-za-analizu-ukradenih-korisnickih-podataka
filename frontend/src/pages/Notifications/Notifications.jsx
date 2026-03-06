@@ -23,23 +23,36 @@ import {
   Error as ErrorIcon,
 } from '@mui/icons-material'
 import { notificationsAPI } from '../../services/api'
+import { useAuth } from '../../contexts/AuthContext'
 
 const Notifications = () => {
+  const { isAuthenticated } = useAuth()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    loadNotifications()
-  }, [])
+    if (isAuthenticated) {
+      loadNotifications()
+    } else {
+      setLoading(false)
+      setNotifications([])
+    }
+  }, [isAuthenticated])
 
   const loadNotifications = async () => {
     try {
       setLoading(true)
+      setError(null)
       const response = await notificationsAPI.getAll()
-      setNotifications(response.data.data || [])
+      setNotifications(response.data?.data || [])
     } catch (err) {
-      setError(err.response?.data?.error?.message || 'Greška pri učitavanju notifikacija')
+      // If 401 or 403, user is not authenticated - show empty list
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setNotifications([])
+      } else {
+        setError(err.response?.data?.error?.message || 'Greška pri učitavanju notifikacija')
+      }
     } finally {
       setLoading(false)
     }

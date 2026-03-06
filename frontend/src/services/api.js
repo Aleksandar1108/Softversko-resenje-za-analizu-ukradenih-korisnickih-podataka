@@ -55,6 +55,7 @@ export const breachAPI = {
 export const emailCheckAPI = {
   checkEmail: (email) => api.post('/users/check-email', { email }),
   getUserBreaches: () => api.get('/users/breaches'),
+  checkPassword: (password) => api.post('/users/check-password', { password }),
 }
 
 // Password Analysis API

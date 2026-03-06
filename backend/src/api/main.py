@@ -15,6 +15,7 @@ from src.api.routes import (
     breach_router,
     data_collection_router,
     ml_analysis_router,
+    notification_router,
     reporting_router,
     user_router,
 )
@@ -54,6 +55,7 @@ app.include_router(analysis_router, prefix="/api/v1")
 app.include_router(reporting_router, prefix="/api/v1")
 app.include_router(data_collection_router, prefix="/api/v1")
 app.include_router(ml_analysis_router, prefix="/api/v1")
+app.include_router(notification_router, prefix="/api/v1")
 
 
 @app.get("/")
