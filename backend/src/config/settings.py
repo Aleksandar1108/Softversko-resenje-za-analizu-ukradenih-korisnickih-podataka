@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/breach_analyzer"
+    # Default to SQLite for easier testing (no setup required)
+    # For production, use PostgreSQL: postgresql+asyncpg://user:password@localhost:5432/breach_analyzer
+    DATABASE_URL: str = "sqlite+aiosqlite:///./breach_analyzer.db"
     
     # JWT
     JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
@@ -22,7 +24,12 @@ class Settings(BaseSettings):
     JWT_EXPIRATION_HOURS: int = 24
     
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ]
     
     # HIBP API
     HIBP_API_KEY: str = ""

@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 from typing import Dict, List
 
-from ....domain.repositories import BreachRepository, CredentialRepository
+from src.domain.repositories import BreachRepository, CredentialRepository
 
 
 class AnalyzeBreachTrendsUseCase:

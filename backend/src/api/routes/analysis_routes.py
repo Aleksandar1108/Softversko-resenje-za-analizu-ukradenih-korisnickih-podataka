@@ -4,20 +4,20 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...application.use_cases.analysis.analyze_credentials import AnalyzeCredentialsUseCase
-from ...application.use_cases.analysis.generate_recommendations import GenerateRecommendationsUseCase
-from ...config.dependencies import (
+from src.application.use_cases.analysis.analyze_credentials import AnalyzeCredentialsUseCase
+from src.application.use_cases.analysis.generate_recommendations import GenerateRecommendationsUseCase
+from src.config.dependencies import (
     get_credential_repository,
     get_password_analyzer,
     get_pattern_analyzer,
     get_password_classifier,
     get_user_repository,
 )
-from ...infrastructure.database.database import get_db
-from ...infrastructure.ml.models.pattern_analyzer import PatternAnalyzer
-from ...infrastructure.ml.models.password_classifier import PasswordClassifier
-from ..middleware.auth_middleware import get_current_user_id
-from ..schemas.credential_schemas import (
+from src.infrastructure.database.database import get_db
+from src.infrastructure.ml.models.pattern_analyzer import PatternAnalyzer
+from src.infrastructure.ml.models.password_classifier import PasswordClassifier
+from src.api.middleware.auth_middleware import get_current_user_id
+from src.api.schemas.credential_schemas import (
     CredentialAnalysisRequest,
     CredentialAnalysisResponse,
 )

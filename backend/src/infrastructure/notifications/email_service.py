@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Dict
 
-from ...config.settings import settings
+from src.config.settings import settings
 
 
 class EmailService:

@@ -1,9 +1,9 @@
 """Use case for scraping breach data from web sources."""
 from typing import List
 
-from ....domain.entities.breach import Breach
-from ....domain.repositories import BreachRepository
-from ....infrastructure.external_apis.breach_scraper import BreachScraper
+from src.domain.entities.breach import Breach
+from src.domain.repositories import BreachRepository
+from src.infrastructure.external_apis.breach_scraper import BreachScraper
 
 
 class ScrapeBreachDataUseCase:

@@ -5,8 +5,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ....domain.entities.user import User
-from ....domain.repositories import UserRepository
+from src.domain.entities.user import User
+from src.domain.repositories import UserRepository
 from ..models.user_model import UserModel
 
 

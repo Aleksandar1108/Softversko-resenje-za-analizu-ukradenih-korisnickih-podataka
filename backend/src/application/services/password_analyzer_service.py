@@ -1,5 +1,5 @@
 """Service for analyzing password strength."""
-from ....domain.value_objects.password_strength import (
+from src.domain.value_objects.password_strength import (
     PasswordStrength,
     PasswordStrengthLevel,
 )

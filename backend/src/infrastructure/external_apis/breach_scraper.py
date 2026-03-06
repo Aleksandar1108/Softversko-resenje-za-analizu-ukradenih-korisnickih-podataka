@@ -8,7 +8,7 @@ from uuid import uuid4
 from bs4 import BeautifulSoup
 import httpx
 
-from ...domain.entities.breach import Breach
+from src.domain.entities.breach import Breach
 
 
 class BreachScraper:

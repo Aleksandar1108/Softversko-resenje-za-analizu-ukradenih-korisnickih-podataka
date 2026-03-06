@@ -2,8 +2,8 @@
 from typing import List
 from uuid import UUID
 
-from ...domain.entities.notification import Notification
-from ...domain.repositories import UserRepository
+from src.domain.entities.notification import Notification
+from src.domain.repositories import UserRepository
 
 
 class NotificationQueue:

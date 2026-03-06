@@ -5,10 +5,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...application.use_cases.data_collection.collect_hibp_data import CollectHIBPDataUseCase
-from ...config.dependencies import get_breach_repository, get_credential_repository, get_hibp_client
-from ...infrastructure.database.database import get_db
-from ..schemas.breach_schemas import BreachListResponse, BreachResponse
+from src.application.use_cases.data_collection.collect_hibp_data import CollectHIBPDataUseCase
+from src.config.dependencies import get_breach_repository, get_credential_repository, get_hibp_client
+from src.infrastructure.database.database import get_db
+from src.api.schemas.breach_schemas import BreachListResponse, BreachResponse
 
 router = APIRouter(prefix="/breaches", tags=["breaches"])
 

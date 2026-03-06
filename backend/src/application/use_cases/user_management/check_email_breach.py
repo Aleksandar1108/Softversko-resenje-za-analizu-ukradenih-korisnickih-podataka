@@ -1,10 +1,10 @@
 """Use case for checking if email is breached."""
 from typing import List
 
-from ....domain.entities.breach import Breach
-from ....domain.repositories import BreachRepository, CredentialRepository
-from ....domain.value_objects.email import Email
-from ...data_collection.collect_hibp_data import CollectHIBPDataUseCase
+from src.domain.entities.breach import Breach
+from src.domain.repositories import BreachRepository, CredentialRepository
+from src.domain.value_objects.email import Email
+from src.application.use_cases.data_collection.collect_hibp_data import CollectHIBPDataUseCase
 
 
 class CheckEmailBreachUseCase:

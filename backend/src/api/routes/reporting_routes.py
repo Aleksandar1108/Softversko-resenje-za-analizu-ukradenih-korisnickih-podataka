@@ -2,14 +2,14 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...config.dependencies import (
+from src.config.dependencies import (
     get_breach_repository,
     get_credential_repository,
     get_user_repository,
 )
-from ...infrastructure.database.database import get_db
-from ...application.use_cases.reporting.analyze_breach_trends import AnalyzeBreachTrendsUseCase
-from ...application.use_cases.reporting.generate_statistics import GenerateStatisticsUseCase
+from src.infrastructure.database.database import get_db
+from src.application.use_cases.reporting.analyze_breach_trends import AnalyzeBreachTrendsUseCase
+from src.application.use_cases.reporting.generate_statistics import GenerateStatisticsUseCase
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 

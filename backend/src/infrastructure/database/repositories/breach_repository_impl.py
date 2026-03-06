@@ -5,8 +5,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ....domain.entities.breach import Breach
-from ....domain.repositories import BreachRepository
+from src.domain.entities.breach import Breach
+from src.domain.repositories import BreachRepository
 from ..models.breach_model import BreachModel
 
 
@@ -36,7 +36,7 @@ class BreachRepositoryImpl(BreachRepository):
             is_spam_list=model.is_spam_list,
             logo_path=model.logo_path,
             source=model.source,
-            metadata=model.metadata,
+            metadata=getattr(model, 'breach_metadata', None),
         )
     
     def _to_model(self, entity: Breach) -> BreachModel:
@@ -58,7 +58,7 @@ class BreachRepositoryImpl(BreachRepository):
             is_spam_list=entity.is_spam_list,
             logo_path=entity.logo_path,
             source=entity.source,
-            metadata=entity.metadata,
+            breach_metadata=entity.metadata,
         )
     
     async def create(self, breach: Breach) -> Breach:

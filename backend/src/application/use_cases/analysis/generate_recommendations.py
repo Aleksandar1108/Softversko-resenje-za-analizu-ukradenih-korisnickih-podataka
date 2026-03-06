@@ -2,8 +2,8 @@
 from typing import List
 from uuid import UUID
 
-from ....domain.entities.credential import Credential
-from ....domain.repositories import CredentialRepository, UserRepository
+from src.domain.entities.credential import Credential
+from src.domain.repositories import CredentialRepository, UserRepository
 
 
 class GenerateRecommendationsUseCase:

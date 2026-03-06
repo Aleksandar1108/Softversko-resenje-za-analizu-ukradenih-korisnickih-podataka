@@ -2,11 +2,11 @@
 from typing import List
 from uuid import UUID
 
-from ....domain.entities.notification import Notification
-from ....domain.entities.user import User
-from ....domain.repositories import UserRepository
-from ....infrastructure.notifications.email_service import EmailService
-from ....infrastructure.notifications.notification_queue import NotificationQueue
+from src.domain.entities.notification import Notification
+from src.domain.entities.user import User
+from src.domain.repositories import UserRepository
+from src.infrastructure.notifications.email_service import EmailService
+from src.infrastructure.notifications.notification_queue import NotificationQueue
 
 
 class SendBreachAlertUseCase:

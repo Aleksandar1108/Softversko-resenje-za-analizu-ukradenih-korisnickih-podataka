@@ -3,14 +3,22 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from ...config.settings import settings
+from src.config.settings import settings
 
 
-# Create async engine
+# Create async engine with connection pool settings
+connect_args = {}
+if "sqlite" in settings.DATABASE_URL:
+    # SQLite specific settings
+    connect_args = {"check_same_thread": False}
+
 async_engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     future=True,
+    connect_args=connect_args,
+    # For SQLite, create tables automatically
+    pool_pre_ping=True if "sqlite" not in settings.DATABASE_URL else False,
 )
 
 # Create async session factory
@@ -30,15 +38,21 @@ async def get_db() -> AsyncSession:
     Yields:
         AsyncSession: Database session
     """
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+    try:
+        async with AsyncSessionLocal() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception as e:
+                await session.rollback()
+                print(f"Database session error: {e}")
+                raise  # Re-raise to let FastAPI handle it
+            finally:
+                await session.close()
+    except Exception as e:
+        # If database connection fails, log and raise
+        print(f"Database connection error: {e}")
+        raise  # Re-raise to let FastAPI handle it properly
 
 
 async def init_db():

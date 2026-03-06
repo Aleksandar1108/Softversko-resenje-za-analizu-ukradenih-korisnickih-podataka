@@ -2,10 +2,10 @@
 from datetime import datetime
 from uuid import uuid4
 
-from ....domain.entities.user import User
-from ....domain.repositories import UserRepository
-from ....domain.value_objects.email import Email
-from ....infrastructure.database.password_hasher import PasswordHasher
+from src.domain.entities.user import User
+from src.domain.repositories import UserRepository
+from src.domain.value_objects.email import Email
+from src.infrastructure.database.password_hasher import PasswordHasher
 
 
 class RegisterUserUseCase:

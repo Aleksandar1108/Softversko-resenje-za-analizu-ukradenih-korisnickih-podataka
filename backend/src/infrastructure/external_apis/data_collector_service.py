@@ -9,9 +9,9 @@ from uuid import uuid4
 import httpx
 from bs4 import BeautifulSoup
 
-from ...domain.entities.breach import Breach
-from ...domain.entities.credential import Credential
-from ...domain.repositories import BreachRepository, CredentialRepository
+from src.domain.entities.breach import Breach
+from src.domain.entities.credential import Credential
+from src.domain.repositories import BreachRepository, CredentialRepository
 from .hibp_client import HIBPClient
 from .breach_scraper import BreachScraper
 

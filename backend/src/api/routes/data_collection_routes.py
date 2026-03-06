@@ -4,15 +4,15 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...config.dependencies import (
+from src.config.dependencies import (
     get_breach_repository,
     get_credential_repository,
     get_hibp_client,
 )
-from ...infrastructure.database.database import get_db
-from ...infrastructure.external_apis.breach_scraper import BreachScraper
-from ...infrastructure.external_apis.data_collector_service import DataCollectorService
-from ..middleware.auth_middleware import get_current_user_id
+from src.infrastructure.database.database import get_db
+from src.infrastructure.external_apis.breach_scraper import BreachScraper
+from src.infrastructure.external_apis.data_collector_service import DataCollectorService
+from src.api.middleware.auth_middleware import get_current_user_id
 
 router = APIRouter(prefix="/data-collection", tags=["data-collection"])
 

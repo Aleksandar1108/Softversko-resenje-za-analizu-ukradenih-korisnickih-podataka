@@ -1,8 +1,8 @@
 """Service for calculating risk scores."""
 from datetime import datetime, timedelta
 
-from ....domain.entities.credential import Credential
-from ....domain.value_objects.risk_score import RiskLevel, RiskScore
+from src.domain.entities.credential import Credential
+from src.domain.value_objects.risk_score import RiskLevel, RiskScore
 
 
 class RiskCalculatorService:

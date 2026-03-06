@@ -8,8 +8,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
-from ...config.settings import settings
-from ...domain.repositories import BreachRepository, CredentialRepository
+from src.config.settings import settings
+from src.domain.repositories import BreachRepository, CredentialRepository
 from ..external_apis.data_collector_service import DataCollectorService
 from ..external_apis.hibp_client import HIBPClient
 from ..external_apis.breach_scraper import BreachScraper

@@ -6,8 +6,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ....domain.entities.credential import Credential
-from ....domain.repositories import CredentialRepository
+from src.domain.entities.credential import Credential
+from src.domain.repositories import CredentialRepository
 from ..models.credential_model import CredentialModel
 
 

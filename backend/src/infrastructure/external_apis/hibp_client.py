@@ -5,8 +5,8 @@ from typing import List, Optional
 
 import httpx
 
-from ...config.settings import settings
-from ...domain.entities.breach import Breach
+from src.config.settings import settings
+from src.domain.entities.breach import Breach
 
 
 class HIBPClient:
@@ -37,20 +37,19 @@ class HIBPClient:
         Returns:
             List of breach entities
         """
-        # Hash email for API call
-        email_hash = hashlib.sha1(email.lower().encode()).hexdigest().upper()
-        prefix = email_hash[:5]
-        suffix = email_hash[5:]
-        
-        # Use range API for password checking (if needed)
-        # For breach checking, use the breachedaccount endpoint
+        # Use breachedaccount endpoint
         url = f"{self.BASE_URL}/breachedaccount/{email}"
         
         try:
-            response = await self.client.get(url)
+            response = await self.client.get(url, params={"truncateResponse": "false"})
             
             if response.status_code == 404:
                 # Email not found in any breach
+                return []
+            
+            if response.status_code == 401:
+                # API key required - return empty for now
+                print("HIBP API key required. Add HIBP_API_KEY to .env file for full functionality.")
                 return []
             
             response.raise_for_status()
@@ -67,9 +66,20 @@ class HIBPClient:
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
                 return []
-            raise
-        finally:
-            await self.client.aclose()
+            if e.response.status_code == 401:
+                print("HIBP API key required. Add HIBP_API_KEY to .env file.")
+                return []
+            # Rate limit or other HTTP error
+            print(f"HIBP API HTTP error: {e.response.status_code} - {e.response.text}")
+            return []
+        except httpx.RequestError as e:
+            # Network error
+            print(f"HIBP API network error: {e}")
+            return []
+        except Exception as e:
+            # Any other error
+            print(f"HIBP API error: {e}")
+            return []
     
     async def get_all_breaches(self) -> List[Breach]:
         """
@@ -91,9 +101,15 @@ class HIBPClient:
                 breaches.append(breach)
             
             return breaches
-            
-        finally:
-            await self.client.aclose()
+        except httpx.HTTPStatusError as e:
+            print(f"HIBP API HTTP error: {e.response.status_code} - {e.response.text}")
+            return []
+        except httpx.RequestError as e:
+            print(f"HIBP API network error: {e}")
+            return []
+        except Exception as e:
+            print(f"HIBP API error: {e}")
+            return []
     
     async def get_breach_by_name(self, name: str) -> Optional[Breach]:
         """
@@ -121,9 +137,11 @@ class HIBPClient:
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
                 return None
-            raise
-        finally:
-            await self.client.aclose()
+            print(f"HIBP API HTTP error: {e.response.status_code}")
+            return None
+        except Exception as e:
+            print(f"HIBP API error: {e}")
+            return None
     
     def _parse_breach_data(self, data: dict) -> Breach:
         """Parse HIBP API response to Breach entity."""

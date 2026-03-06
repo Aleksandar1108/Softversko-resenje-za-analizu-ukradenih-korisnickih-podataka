@@ -1,7 +1,7 @@
 """Use case for generating statistics."""
 from typing import Dict
 
-from ....domain.repositories import BreachRepository, CredentialRepository, UserRepository
+from src.domain.repositories import BreachRepository, CredentialRepository, UserRepository
 
 
 class GenerateStatisticsUseCase:

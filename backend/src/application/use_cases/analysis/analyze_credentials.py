@@ -2,11 +2,11 @@
 from typing import List
 from uuid import UUID
 
-from ....domain.entities.credential import Credential
-from ....domain.repositories import CredentialRepository
-from ....infrastructure.ml.models.password_classifier import PasswordClassifier
-from ....infrastructure.ml.models.pattern_analyzer import PatternAnalyzer
-from ...services.password_analyzer_service import PasswordAnalyzerService
+from src.domain.entities.credential import Credential
+from src.domain.repositories import CredentialRepository
+from src.infrastructure.ml.models.password_classifier import PasswordClassifier
+from src.infrastructure.ml.models.pattern_analyzer import PatternAnalyzer
+from src.application.services.password_analyzer_service import PasswordAnalyzerService
 
 
 class AnalyzeCredentialsUseCase:

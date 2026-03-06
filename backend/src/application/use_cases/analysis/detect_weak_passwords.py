@@ -1,9 +1,9 @@
 """Use case for detecting weak passwords."""
 from typing import List
 
-from ....domain.entities.credential import Credential
-from ....domain.repositories import CredentialRepository
-from ...services.password_analyzer_service import PasswordAnalyzerService
+from src.domain.entities.credential import Credential
+from src.domain.repositories import CredentialRepository
+from src.application.services.password_analyzer_service import PasswordAnalyzerService
 
 
 class DetectWeakPasswordsUseCase:

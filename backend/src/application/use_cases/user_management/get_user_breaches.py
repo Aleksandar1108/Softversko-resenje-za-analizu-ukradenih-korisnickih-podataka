@@ -2,8 +2,8 @@
 from typing import List
 from uuid import UUID
 
-from ....domain.entities.breach import Breach
-from ....domain.repositories import BreachRepository, CredentialRepository, UserRepository
+from src.domain.entities.breach import Breach
+from src.domain.repositories import BreachRepository, CredentialRepository, UserRepository
 
 
 class GetUserBreachesUseCase:

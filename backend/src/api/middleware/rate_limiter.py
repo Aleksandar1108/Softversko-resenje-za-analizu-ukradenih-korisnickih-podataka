@@ -59,6 +59,10 @@ rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
 
 async def rate_limit_middleware(request: Request, call_next):
     """Rate limiting middleware."""
+    # Skip rate limiting for OPTIONS requests (CORS preflight)
+    if request.method == "OPTIONS":
+        return await call_next(request)
+    
     client_id = rate_limiter.get_client_id(request)
     
     if not rate_limiter.is_allowed(client_id):

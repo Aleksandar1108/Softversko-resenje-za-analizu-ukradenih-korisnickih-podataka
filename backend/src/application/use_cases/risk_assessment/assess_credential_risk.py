@@ -2,10 +2,10 @@
 from typing import List
 from uuid import UUID
 
-from ....domain.entities.credential import Credential
-from ....domain.repositories import CredentialRepository
-from ....infrastructure.ml.models.risk_predictor import RiskPredictor
-from ...services.risk_calculator_service import RiskCalculatorService
+from src.domain.entities.credential import Credential
+from src.domain.repositories import CredentialRepository
+from src.infrastructure.ml.models.risk_predictor import RiskPredictor
+from src.application.services.risk_calculator_service import RiskCalculatorService
 
 
 class AssessCredentialRiskUseCase:

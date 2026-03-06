@@ -2,9 +2,9 @@
 from typing import List
 from uuid import UUID
 
-from ....domain.entities.breach import Breach
-from ....domain.repositories import BreachRepository, CredentialRepository
-from ....infrastructure.external_apis.hibp_client import HIBPClient
+from src.domain.entities.breach import Breach
+from src.domain.repositories import BreachRepository, CredentialRepository
+from src.infrastructure.external_apis.hibp_client import HIBPClient
 
 
 class CollectHIBPDataUseCase:

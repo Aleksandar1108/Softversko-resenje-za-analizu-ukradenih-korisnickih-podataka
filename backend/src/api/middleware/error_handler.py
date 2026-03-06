@@ -36,13 +36,21 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 async def general_exception_handler(request: Request, exc: Exception):
     """Handle general exceptions."""
+    import traceback
+    error_details = str(exc)
+    traceback_str = traceback.format_exc()
+    
+    # Log error for debugging
+    print(f"Error in {request.url.path}: {error_details}")
+    print(traceback_str)
+    
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "success": False,
             "error": {
                 "code": "INTERNAL_ERROR",
-                "message": "An internal error occurred",
+                "message": str(exc) if str(exc) else "An internal error occurred",
             },
         },
     )

@@ -6,7 +6,7 @@ from typing import Dict, Optional
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-from ...config.settings import settings
+from src.config.settings import settings
 
 
 class PasswordClassifier:
