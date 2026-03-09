@@ -26,7 +26,6 @@ import { passwordAnalysisAPI, emailCheckAPI } from '../../services/api'
 
 const PasswordAnalysis = () => {
   const [password, setPassword] = useState('')
-  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -56,7 +55,6 @@ const PasswordAnalysis = () => {
       // Then analyze password
       const response = await passwordAnalysisAPI.analyzePassword({
         password,
-        email: email || undefined,
         breach_count: passwordBreachCheck?.count || 0,
       })
       setResult(response.data)
@@ -118,14 +116,6 @@ const PasswordAnalysis = () => {
                     handleAnalyze()
                   }
                 }}
-              />
-              <TextField
-                fullWidth
-                label="Email (opciono)"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="example@email.com"
               />
               <Button
                 variant="contained"

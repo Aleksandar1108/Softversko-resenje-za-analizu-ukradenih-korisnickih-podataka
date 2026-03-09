@@ -3,40 +3,13 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
-import jwt
 
 from src.config.dependencies import get_notification_queue
-from src.config.settings import settings
 from src.infrastructure.database.database import get_db
+from src.api.middleware.auth_middleware import get_optional_user_id
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
-security = HTTPBearer(auto_error=False)
-
-
-async def get_optional_user_id(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
-) -> Optional[UUID]:
-    """Get current user ID from JWT token if available."""
-    if not credentials:
-        return None
-    
-    token = credentials.credentials
-    
-    try:
-        payload = jwt.decode(
-            token,
-            settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM]
-        )
-        user_id: str = payload.get("sub")
-        if user_id:
-            return UUID(user_id)
-    except (jwt.ExpiredSignatureError, jwt.JWTError):
-        pass
-    
-    return None
 
 
 @router.get("")
@@ -122,20 +95,28 @@ async def delete_notification(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete notification."""
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
+    
     try:
         notification_queue = await get_notification_queue(db)
-        notifications = await notification_queue.get_for_user(user_id)
+        success = await notification_queue.delete(notification_id)
         
-        # Filter out the notification to delete
-        filtered = [n for n in notifications if n.id != notification_id]
-        
-        # In a real implementation, this would delete from database
-        # For now, we just return success
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Notification not found",
+            )
         
         return {
             "success": True,
             "message": "Notification deleted",
         }
+    except HTTPException:
+        raise
     except Exception as e:
         return {
             "success": True,

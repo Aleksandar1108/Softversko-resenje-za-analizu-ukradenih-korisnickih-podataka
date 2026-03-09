@@ -17,11 +17,8 @@ from src.config.dependencies import (
 )
 from pydantic import BaseModel
 from src.infrastructure.database.database import get_db
-from src.api.middleware.auth_middleware import get_current_user_id
+from src.api.middleware.auth_middleware import get_current_user_id, get_optional_user_id
 from typing import Optional
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import jwt
-from src.config.settings import settings
 from src.api.schemas.user_schemas import (
     EmailCheckRequest,
     EmailCheckResponse,
@@ -31,31 +28,6 @@ from src.api.schemas.user_schemas import (
 )
 
 router = APIRouter(prefix="/users", tags=["users"])
-security_optional = HTTPBearer(auto_error=False)
-
-
-async def get_optional_user_id(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional)
-) -> Optional[UUID]:
-    """Get current user ID from JWT token if available."""
-    if not credentials:
-        return None
-    
-    token = credentials.credentials
-    
-    try:
-        payload = jwt.decode(
-            token,
-            settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM]
-        )
-        user_id: str = payload.get("sub")
-        if user_id:
-            return UUID(user_id)
-    except (jwt.ExpiredSignatureError, jwt.JWTError):
-        pass
-    
-    return None
 
 
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
@@ -155,56 +127,147 @@ async def login_user(
 async def check_email_breach(
     request: EmailCheckRequest,
     user_id: Optional[UUID] = Depends(get_optional_user_id),
+    db: Optional[AsyncSession] = Depends(get_db),
 ):
     """Check if email has been breached."""
+    import sys
+    print(f"\n{'='*60}", file=sys.stderr, flush=True)
+    print(f"=== CHECK EMAIL BREACH ===", file=sys.stderr, flush=True)
+    print(f"Email: {request.email}", file=sys.stderr, flush=True)
+    print(f"User ID: {user_id}", file=sys.stderr, flush=True)
+    print(f"DB Session: {db is not None}", file=sys.stderr, flush=True)
+    print(f"{'='*60}\n", file=sys.stderr, flush=True)
+    
+    print(f"\n{'='*60}")
+    print(f"=== CHECK EMAIL BREACH ===")
+    print(f"Email: {request.email}")
+    print(f"User ID: {user_id}")
+    print(f"DB Session: {db is not None}")
+    print(f"{'='*60}\n")
+    
     breaches = []
     try:
         # Get HIBP client safely
         hibp_client = None
         try:
+            print(f"Getting HIBP client...")
             hibp_client = get_hibp_client()
+            print(f"HIBP client obtained: {hibp_client is not None}")
         except Exception as client_error:
-            print(f"Error getting HIBP client: {client_error}")
+            print(f"❌ Error getting HIBP client: {client_error}")
+            import traceback
+            print(traceback.format_exc())
             # Continue with empty breaches list
         
         # Get breaches directly from HIBP API (works without database)
         if hibp_client:
+            print(f"Calling HIBP API for email: {request.email}")
             try:
                 breaches_data = await hibp_client.get_breaches_for_email(request.email)
+                print(f"HIBP API returned: {len(breaches_data) if breaches_data else 0} breaches")
                 breaches = breaches_data if breaches_data else []
+                print(f"Breaches list length: {len(breaches)}")
             except Exception as api_error:
-                print(f"Error calling HIBP API: {api_error}")
+                print(f"❌ Error calling HIBP API: {api_error}")
+                import traceback
+                print(traceback.format_exc())
                 # Continue with empty breaches list
                 breaches = []
+        else:
+            print(f"❌ HIBP client is None - cannot check email")
+            breaches = []
         
         # Calculate statistics (without database for now - can be enhanced later)
         total_breaches = len(breaches)
+        print(f"Total breaches found: {total_breaches}")
         
-        # If user is logged in and breaches found, create notifications
-        if user_id and total_breaches > 0:
+        # If user is logged in and breaches found, save to database and create notifications
+        if user_id and total_breaches > 0 and db:
             try:
-                # Get db session for authenticated user
-                async for db in get_db():
+                from datetime import datetime
+                from uuid import uuid4
+                from src.config.dependencies import get_notification_queue, get_breach_repository
+                from src.domain.entities.notification import Notification
+                from src.infrastructure.database.models.user_breach_model import UserBreachModel
+                from sqlalchemy import select
+                
+                breach_repo = await get_breach_repository(db)
+                notification_queue = await get_notification_queue(db)
+                
+                # Save breaches to database and create user-breach relationships
+                for breach in breaches:
                     try:
-                        from datetime import datetime
-                        from uuid import uuid4
-                        from src.config.dependencies import get_notification_queue
-                        from src.domain.entities.notification import Notification
+                        breach_name = breach.name if hasattr(breach, 'name') else 'Unknown'
                         
-                        notification_queue = await get_notification_queue(db)
+                        # Check if breach exists in database
+                        existing_breach = await breach_repo.get_by_name(breach_name)
                         
-                        # Create notification for each breach
-                        for breach in breaches:
+                        if existing_breach:
+                            breach_id = existing_breach.id
+                        else:
+                            # Create breach in database if it doesn't exist
+                            from src.domain.entities.breach import Breach
+                            
+                            new_breach = Breach(
+                                id=None,
+                                name=breach_name,
+                                domain=breach.domain if hasattr(breach, 'domain') else None,
+                                breach_date=breach.breach_date if hasattr(breach, 'breach_date') and breach.breach_date else None,
+                                added_date=datetime.utcnow(),
+                                modified_date=None,
+                                pwn_count=None,
+                                description=None,
+                                data_classes=breach.data_classes if hasattr(breach, 'data_classes') else [],
+                                is_verified=False,
+                                is_fabricated=False,
+                                is_sensitive=False,
+                                is_retired=False,
+                                is_spam_list=False,
+                                logo_path=None,
+                                source='hibp',
+                                metadata=None,
+                            )
+                            saved_breach = await breach_repo.create(new_breach)
+                            breach_id = saved_breach.id
+                        
+                        # Create or update user-breach relationship
+                        result = await db.execute(
+                            select(UserBreachModel).where(
+                                UserBreachModel.user_id == user_id,
+                                UserBreachModel.breach_id == breach_id
+                            )
+                        )
+                        user_breach = result.scalar_one_or_none()
+                        
+                        is_new_user_breach = False
+                        if not user_breach:
+                            # Create new user-breach relationship
+                            is_new_user_breach = True
+                            user_breach = UserBreachModel(
+                                id=uuid4(),
+                                user_id=user_id,
+                                breach_id=breach_id,
+                                notified_at=datetime.utcnow(),
+                                notification_sent=False,
+                                acknowledged_at=None,
+                                created_at=datetime.utcnow(),
+                            )
+                            db.add(user_breach)
+                            await db.flush()
+                        
+                        # Only create notification if this is a new user-breach relationship
+                        # to avoid duplicate notifications
+                        if is_new_user_breach:
                             notification = Notification(
                                 id=uuid4(),
                                 user_id=user_id,
                                 type="breach_alert",
-                                title=f"Email pronađen u breach-u: {breach.name if hasattr(breach, 'name') else 'Unknown'}",
+                                title=f"Email pronađen u breach-u: {breach_name}",
                                 message=f"Vaš email {request.email} je pronađen u data breach-u. Preporučujemo da promenite lozinku.",
                                 is_read=False,
                                 priority="high",
                                 metadata={
-                                    "breach_name": breach.name if hasattr(breach, 'name') else 'Unknown',
+                                    "breach_name": breach_name,
                                     "breach_date": breach.breach_date.isoformat() if hasattr(breach, 'breach_date') and breach.breach_date else None,
                                     "data_classes": breach.data_classes if hasattr(breach, 'data_classes') else [],
                                 },
@@ -212,14 +275,43 @@ async def check_email_breach(
                                 read_at=None,
                             )
                             await notification_queue.enqueue(notification)
+                            
+                            # Mark notification as sent
+                            user_breach.notification_sent = True
+                            user_breach.notified_at = datetime.utcnow()
+                            await db.flush()
                         
-                        print(f"Created {total_breaches} notifications for user {user_id}")
-                    except Exception as notif_error:
-                        print(f"Error creating notifications: {notif_error}")
-                        # Continue even if notifications fail
-                    break  # Exit after first session
+                    except Exception as breach_save_error:
+                        print(f"Error saving breach/user-breach relationship: {breach_save_error}")
+                        import traceback
+                        print(traceback.format_exc())
+                        # Continue with next breach even if this one fails
+                        continue
+                
+                # Commit all changes
+                try:
+                    await db.commit()
+                    print(f"✅ Saved {total_breaches} breaches and created notifications for user {user_id}")
+                except Exception as commit_error:
+                    print(f"❌ Error committing to database: {commit_error}")
+                    import traceback
+                    print(traceback.format_exc())
+                    try:
+                        await db.rollback()
+                        print("✅ Rollback successful")
+                    except Exception as rollback_error:
+                        print(f"❌ Error during rollback: {rollback_error}")
+                    # Continue even if commit fails - don't break the response
+                
             except Exception as db_error:
-                print(f"Error getting db session for notifications: {db_error}")
+                print(f"❌ Error saving to database: {db_error}")
+                import traceback
+                print(traceback.format_exc())
+                try:
+                    if db:
+                        await db.rollback()
+                except Exception as rollback_error:
+                    print(f"❌ Error rolling back: {rollback_error}")
                 # Continue even if db fails
         
         # Parse breaches safely

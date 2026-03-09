@@ -1,9 +1,21 @@
 """FastAPI application main file."""
+import logging
+import sys
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config.settings import settings
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.StreamHandler(sys.stderr)
+    ]
+)
 from src.api.middleware import (
     general_exception_handler,
     http_exception_handler,
@@ -39,6 +51,24 @@ app.add_middleware(
     expose_headers=["*"],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
+
+# Request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all requests for debugging."""
+    import sys
+    print(f"\n{'='*60}", file=sys.stderr, flush=True)
+    print(f"REQUEST: {request.method} {request.url.path}", file=sys.stderr, flush=True)
+    print(f"Query params: {dict(request.query_params)}", file=sys.stderr, flush=True)
+    if request.url.path == "/api/v1/users/check-email":
+        print(f"⚠️ CHECK EMAIL ENDPOINT CALLED!", file=sys.stderr, flush=True)
+    print(f"{'='*60}\n", file=sys.stderr, flush=True)
+    
+    response = await call_next(request)
+    
+    print(f"RESPONSE: {response.status_code} for {request.method} {request.url.path}", file=sys.stderr, flush=True)
+    
+    return response
 
 # Rate limiting middleware
 app.middleware("http")(rate_limit_middleware)

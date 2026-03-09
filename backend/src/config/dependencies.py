@@ -32,9 +32,15 @@ _email_service = None
 
 def get_hibp_client() -> HIBPClient:
     """Get HIBP client instance."""
+    import sys
     global _hibp_client
-    if _hibp_client is None:
-        _hibp_client = HIBPClient(api_key=settings.HIBP_API_KEY)
+    # Always create a new client to ensure API key is refreshed from settings
+    # (in case .env file was updated)
+    api_key = settings.HIBP_API_KEY
+    print(f"DEBUG: Creating HIBPClient. API Key from settings: {api_key[:8] if api_key else 'None'}... (length: {len(api_key) if api_key else 0})", file=sys.stderr, flush=True)
+    print(f"DEBUG: Creating HIBPClient. API Key from settings: {api_key[:8] if api_key else 'None'}... (length: {len(api_key) if api_key else 0})")
+    _hibp_client = HIBPClient(api_key=api_key)
+    print(f"DEBUG: HIBPClient created successfully", file=sys.stderr, flush=True)
     return _hibp_client
 
 
@@ -112,4 +118,4 @@ async def get_user_repository(session: AsyncSession) -> UserRepositoryImpl:
 async def get_notification_queue(session: AsyncSession) -> NotificationQueue:
     """Get notification queue instance."""
     user_repo = await get_user_repository(session)
-    return NotificationQueue(user_repo)
+    return NotificationQueue(user_repo, session=session)

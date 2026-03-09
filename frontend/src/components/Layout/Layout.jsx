@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   AppBar,
@@ -30,6 +30,7 @@ import {
 } from '@mui/icons-material'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '@mui/material'
+import { notificationsAPI } from '../../services/api'
 
 const drawerWidth = 240
 
@@ -51,9 +52,34 @@ const protectedMenuItems = [
 const Layout = () => {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState(null)
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout } = useAuth()
+  const { user, logout, isAuthenticated } = useAuth()
+
+  // Load unread notifications count
+  useEffect(() => {
+    const loadUnreadCount = async () => {
+      if (isAuthenticated) {
+        try {
+          const response = await notificationsAPI.getAll()
+          const notifications = response.data?.data || []
+          const unreadCount = notifications.filter((n) => !n.is_read).length
+          setUnreadNotifications(unreadCount)
+        } catch (err) {
+          // Silently fail - user might not be authenticated yet
+          setUnreadNotifications(0)
+        }
+      } else {
+        setUnreadNotifications(0)
+      }
+    }
+
+    loadUnreadCount()
+    // Refresh every 30 seconds
+    const interval = setInterval(loadUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [isAuthenticated, location.pathname])
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -195,7 +221,7 @@ const Layout = () => {
                   color="inherit"
                   onClick={() => navigate('/notifications')}
                 >
-                  <Badge badgeContent={0} color="error">
+                  <Badge badgeContent={unreadNotifications} color="error">
                     <NotificationsIcon />
                   </Badge>
                 </IconButton>

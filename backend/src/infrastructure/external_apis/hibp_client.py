@@ -1,5 +1,6 @@
 """HaveIBeenPwned API client."""
 import hashlib
+import logging
 from datetime import date, datetime
 from typing import List, Optional
 from urllib.parse import quote
@@ -8,6 +9,8 @@ import httpx
 
 from src.config.settings import settings
 from src.domain.entities.breach import Breach
+
+logger = logging.getLogger(__name__)
 
 
 class HIBPClient:
@@ -28,8 +31,10 @@ class HIBPClient:
         # Add API key if available
         if self.api_key:
             base_headers["hibp-api-key"] = self.api_key
+            logger.info(f"HIBP Client initialized with API key: {self.api_key[:8]}...")
             print(f"HIBP Client initialized with API key: {self.api_key[:8]}...")
         else:
+            logger.warning("HIBP Client initialized WITHOUT API key (rate limited)")
             print("HIBP Client initialized WITHOUT API key (rate limited)")
         
         self.client = httpx.AsyncClient(
@@ -51,37 +56,30 @@ class HIBPClient:
         encoded_email = quote(email, safe='')
         url = f"{self.BASE_URL}/breachedaccount/{encoded_email}"
         
-        print(f"HIBP: Checking email {email} (encoded: {encoded_email})")
+        print(f"HIBP: Checking email {email}")
         print(f"HIBP: URL: {url}")
         print(f"HIBP: Has API key: {bool(self.api_key)}")
         
         try:
-            # Use client with headers already set in __init__
             response = await self.client.get(
                 url, 
                 params={"truncateResponse": "false"}
             )
             
+            print(f"HIBP: Response status: {response.status_code}")
+            
             if response.status_code == 404:
-                # Email not found in any breach
                 print(f"HIBP: Email {email} not found in any breach")
                 return []
             
             if response.status_code == 401:
-                # API key required or invalid
                 error_text = response.text
                 print(f"HIBP API 401 error: {error_text}")
                 print("HIBP API key required or invalid. Add valid HIBP_API_KEY to .env file.")
-                print("Get your free API key at: https://haveibeenpwned.com/API/Key")
-                # Try without API key using rate-limited endpoint
-                print("⚠️ HIBP API key nije dodat. Email provera neće raditi bez API key-a.")
-                print("💡 HIBP API key je BESPLATAN! Dobijte ga na: https://haveibeenpwned.com/API/Key")
-                print("💡 Alternativa: Koristite Password Check (besplatno, bez API key-a)")
-                return await self._get_breaches_without_key(email)
+                return []
             
             if response.status_code == 429:
-                # Rate limit exceeded
-                print("HIBP API rate limit exceeded. Please wait or add API key.")
+                print("HIBP API rate limit exceeded")
                 return []
             
             response.raise_for_status()
@@ -110,20 +108,17 @@ class HIBPClient:
                 return []
             if e.response.status_code == 401:
                 print(f"HIBP API 401: {e.response.text}")
-                print("HIBP API key required. Get free key at: https://haveibeenpwned.com/API/Key")
-                return await self._get_breaches_without_key(email)
+                print("HIBP API key required or invalid. Get free key at: https://haveibeenpwned.com/API/Key")
+                return []
             if e.response.status_code == 429:
                 print("HIBP API rate limit exceeded")
                 return []
-            # Other HTTP error
             print(f"HIBP API HTTP error {e.response.status_code}: {e.response.text}")
             return []
         except httpx.RequestError as e:
-            # Network error
             print(f"HIBP API network error: {e}")
             return []
         except Exception as e:
-            # Any other error
             print(f"HIBP API error: {e}")
             import traceback
             print(traceback.format_exc())
